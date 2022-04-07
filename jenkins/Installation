@@ -1,0 +1,58 @@
+Install Jenkins on CentOS 7:
+Download Jenkins repository:
+
+$ sudo wget -O /etc/yum.repos.d/jenkins.repo http://pkg.jenkins-ci.org/redhat/jenkins.repo
+$ sudo rpm --import https://jenkins-ci.org/redhat/jenkins-ci.org.key
+
+Install Jenkins Master:
+$ sudo yum install jenkins
+
+Install Java:
+$ sudo yum install java
+
+Start Jenkins:
+$ service jenkins start
+$ chkconfig jenkins on
+
+Set firewall rules to access via web browser on port 8080:
+$ firewall-cmd --zone=public --add-port=8080/tcp --permanent
+$ firewall-cmd --zone=public --add-service=http --permanent
+# firewall-cmd --reload
+Open your browser and go to http://jenkins-server:8080 and complete the initial configuration
+
+
+
+Install Jenkins on Windows 2012 R2 Core:
+After installing windows Server Core open powershell.exe via task manager and run the following script:
+
+# Install .NET Framework 3.5
+Install-WindowsFeature -Name NET-Framework-Core
+
+# Install Chocolatey
+iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))
+
+# Install JDK 8
+choco install jdk8 -y
+
+# Install Jenkins using Chocolatey
+choco install Jenkins -y
+
+# Set the port Jenkins uses
+$Config = Get-Content `
+  -Path "${ENV:ProgramFiles(x86)}\Jenkins\Jenkins.xml"
+$NewConfig = $Config `
+  -replace '--httpPort=[0-9]*\s',"--httpPort=$Port "
+Set-Content `
+  -Path "${ENV:ProgramFiles(x86)}\Jenkins\Jenkins.xml" `
+  -Value $NewConfig `
+  -Force
+Restart-Service `
+  -Name Jenkins
+
+From C:\Windows\Program Files (x86)\Jenkins\secret\IntialAdminPassword copy the string and open the browser at http://JenkinsIPAddress (Use the initial password here)
+
+
+Making Jenkins Server looks better:
+Go to "Manage Jenkins" --> "Plugin Manager" and Install "Simple Theme Plugin".
+After the installation completed, go to "Manage Jenkins" --> System Configuration".
+Add the following URL to the "Theme" section - http://afonsof.com/jenkins-material-theme/dist/material-teal.css

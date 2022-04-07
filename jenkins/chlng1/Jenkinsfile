@@ -1,0 +1,96 @@
+def USER = "root"
+def SERVER = "192.168.178.55"
+def FAIL= "sed -i '71d' /root/nginx-chlng/src/core/ngx_core.h"
+//def date = new Date()
+Date date = new Date()
+String datePart = date.format("dd-MM-yyyy")
+
+def LOG= "/tmp/CurLog_${datePart}.log"
+//echo "${LOG}"
+
+pipeline {
+    agent any
+    stages {
+        stage('Clone git Repositry') {
+           steps {
+                sh "ssh ${USER}@${SERVER} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o GlobalKnownHostsFile=/dev/null 'yum install -y git'"
+                sh "ssh ${USER}@${SERVER} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o GlobalKnownHostsFile=/dev/null 'rm -rf /root/nginx-chlng'"
+                sh "ssh ${USER}@${SERVER} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o GlobalKnownHostsFile=/dev/null 'git clone https://github.com/endocode/nginx-chlng'"
+                sh "ssh ${USER}@${SERVER} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o GlobalKnownHostsFile=/dev/null 'ls -lah /root/nginx-chlng'"
+           }
+           post {
+                success {
+                    echo "Succes - Cloning the repository for nginx Challange"
+                }
+                failure {
+                    echo "Failed - Cloning the repository for nginx Challange"
+                }
+           }
+        }
+        stage('Configure nginx') {
+           steps {
+                sh "ssh ${USER}@${SERVER} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o GlobalKnownHostsFile=/dev/null 'yum install -y gcc gcc-c++ make zlib-devel pcre-devel openssl-devel libffi-devel libssl-dev'"
+                sh "ssh ${USER}@${SERVER} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o GlobalKnownHostsFile=/dev/null 'mkdir -p /root/nginx-chlng/logs'"
+                sh "ssh ${USER}@${SERVER} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o GlobalKnownHostsFile=/dev/null 'touch /root/nginx-chlng/logs/access.log && touch /root/nginx-chlng/logs/error.log'"
+                sh "ssh ${USER}@${SERVER} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o GlobalKnownHostsFile=/dev/null 'rm -rf /root/chlng1'"
+                sh "ssh ${USER}@${SERVER} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o GlobalKnownHostsFile=/dev/null 'git clone https://github.com/Nadavbm/chlng1'"
+                sh "ssh ${USER}@${SERVER} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o GlobalKnownHostsFile=/dev/null 'cd /root/nginx-chlng && ./configure --prefix=/usr/website --conf-path=/usr/website/conf/nginx.conf --error-log-path=/usr/website/logs/error.log --http-log-path=/usr/website/logs/access.log'"
+           }
+           post {
+                success {
+                    echo "Succesfully configure nginx for compilation"
+                }
+                failure {
+                    echo "Failed configuring nginx for compilation"
+                }
+            }
+        }
+        stage('Make and Install nginx') {
+           steps {
+              sh "ssh ${USER}@${SERVER} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o GlobalKnownHostsFile=/dev/null '${FAIL}'"
+              sh "ssh ${USER}@${SERVER} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o GlobalKnownHostsFile=/dev/null 'cd /root/nginx-chlng && make'"
+              sh "ssh ${USER}@${SERVER} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o GlobalKnownHostsFile=/dev/null 'cd /root/nginx-chlng && make install'"
+           }
+           post {
+                success {
+                    echo "Succesfully compile nginx"
+                }
+                failure {
+                    echo "Failed to compile nginx"
+                }
+            }
+        }
+        stage('Create docker image') {
+            steps {
+              //sh "ssh ${USER}@${SERVER} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o GlobalKnownHostsFile=/dev/null 'docker image rm $(docker image ls -a -q) -f'"
+              sh "ssh ${USER}@${SERVER} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o GlobalKnownHostsFile=/dev/null 'docker build -t repo:mynginx .'"
+           }
+           post {
+                success {
+                    echo "Succesfully built Docker image and copying the repository to the image"
+                }
+                failure {
+                    echo "Failed to create the image to nginx on basic linux image"
+                }
+            }
+        }
+        stage('Run docker container') {
+            steps {
+              sh "ssh ${USER}@${SERVER} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o GlobalKnownHostsFile=/dev/null 'docker run -it -p 80:8080 repo:mynginx'"
+           }
+           post {
+                success {
+                    echo "Succesfully run docker image"
+                }
+                failure {
+                    echo "Failed to run the image"
+                }
+            }
+        }
+        stage('Check website availability') {
+            steps {
+              curl 'http://${SERVER}:8080/index.html >> ${LOG}'
+            }
+        }
+    }
+}

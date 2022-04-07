@@ -1,0 +1,56 @@
+def USER = devUser
+def SERVER = 10.10.10.10
+
+pipeline {
+    agent any
+    parameters {
+        string(defaultValue: '--------', description: 'someString', name: 'str')
+    }
+    environment {
+       SQL = "ssh test \"psql -d dbName -c 'select * from tableName where number > 0 order by id, number desc;'\""
+    }
+    stages {
+        stage('Stage1') {
+            steps {
+                script {
+                    env.fileSum = sh "ssh ${USER}@${SERVER} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o GlobalKnownHostsFile=/dev/null 'ls -1 | wc -l'"
+                }
+                echo "${env.fileSum}"
+                }
+        }
+        stage('Stage2') {
+          when {
+                expression {
+                  currentBuild.result == null || currentBuild.result == 'SUCCESS' (1)
+                }
+            }
+            steps {
+                  sh "ssh ${USER}@${SERVER} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o GlobalKnownHostsFile=/dev/null 'cd /some/dir/ && ls -1 | wc -l'"
+            }
+        }
+        stage('Stage3') {
+                steps {
+                    sh '''  '''
+                }
+                post {
+                    success {
+                        echo "Succes"
+                    }
+                    failure {
+                        echo "Failed"
+                    }
+                    aborted {
+                        echo "Aborted"
+                    }
+                }
+            }
+        }
+        post {
+            failure {
+                echo "Pipeline failed"
+            }
+        }
+}
+
+https://jenkins.io/doc/book/pipeline/jenkinsfile/
+https://jenkins.io/blog/2017/10/02/pipeline-templates-with-shared-libraries/
