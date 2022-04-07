@@ -1,0 +1,12 @@
+---
+
+- name: Install common packages on the server
+  yum: name={{ item }} state=latest
+  with_items:
+    - nano
+    - wget
+    - policycoreutils-python
+  ignore_errors: yes
+
+- name: Install EPEL Release
+  shell: yum install epel-release -y

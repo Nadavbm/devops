@@ -1,0 +1,37 @@
+---
+
+- name: Add user and deploy SSH Keys for SSH authentication
+  hosts: swarm
+  remote_user: nadav.benmazia
+  become: yes
+  vars:
+    user: userName
+  tasks:
+  - name: Verify LVM installation
+    shell: rpm -qa | grep lvm
+    ignore_errors: yes
+
+  - name: Verify sshd_config file attribute for SSH connection
+    shell: cat /etc/ssh/sshd_config | grep PermitRootLogin
+    ignore_errors: yes
+
+  - name: Verify sshd_config file attribute for	SSH connection
+    shell: cat /etc/ssh/sshd_config | grep AllowUsers
+    ignore_errors: yes
+
+  - name: Verify sshd_config file attribute for	SSH connection
+    shell: cat /etc/ssh/sshd_config | grep DenyUsers
+    ignore_errors: yes
+
+  - name: Get authorized keys output
+    shell: cat /home/{{ user }}/.ssh/authorized_keys
+    ignore_errors: yes
+
+  - name: Get id_rsa.pub key as an output
+    shell: cat /home/{{ user }}/.ssh/id_rsa.pub
+    ignore_errors: yes
+
+#  - name: Get authorized keys output
+#    shell: cat /home/{{ user }}/.ssh/authorized_keys
+#    ignore_errors: yes
+

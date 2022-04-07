@@ -1,0 +1,48 @@
+---
+
+- name: Install apache httpd
+  yum: name={{ item }} state=present
+  with_items:
+    - epel-release
+
+- name: Yum update
+  shell: yum update -y
+
+- name: Install nginx
+  yum: name={{ item }} state=present
+  with_items:
+    - nginx
+
+- name: Enable nginx daemons
+  service: name={{item}} enabled=yes
+  with_items:
+    - nginx
+  ignore_errors: yes
+
+- name: Restart daemons
+  service: name={{item}} state=restarted enabled=yes
+  with_items:
+    - nginx
+  ignore_errors: yes
+
+#- name: httpd configuration
+#  template:
+#    src: httpd.conf.j2
+#    dest: "/etc/httpd/conf/httpd.conf"
+#    owner: root
+#    group: root
+#    mode: 0644
+
+#- name: Add vhost configuration
+#  template:
+#    src: vhost.conf.j2
+#    dest: "/etc/httpd/conf.d/vhost.conf"
+#    owner: root
+#    group: root
+#    mode: 0644
+
+#- name: restart daemons
+#  service: name={{item}} state=restarted enabled=yes
+#  with_items:
+#    - httpd
+#  ignore_errors: yes

@@ -1,0 +1,20 @@
+---
+
+- name: Copy composer packges
+  shell: php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+  ignore_errors: yes
+- name: Verify installation package
+  shell: php -r "if (hash_file('SHA384', 'composer-setup.php') === '544e09ee996cdf60ece3804abc52599c22b1f40f4323403c44d44fdfdd586475ca9813a858088ffbc1f233e9b180f061') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+  ignore_errors: yes
+- name: Setup composer with php
+  shell: php composer-setup.php
+  ignore_errors: yes
+- name: Install composer
+  shell: php composer.phar
+  ignore_errors: yes
+- name: Copy composer commands to bin folder
+  shell: sudo cp composer.phar /usr/bin/composer
+  ignore_errors: yes
+- name: Set link for composer commands
+  shell: sudo ln -s ~/composer /usr/bin/composer.phar
+  ignore_errors: yes

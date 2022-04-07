@@ -1,0 +1,24 @@
+---
+
+- name: Add check script
+  template:
+    src: check.sh
+    dest: /storage/docker/install/check.sh
+    mode: 755
+    owner: root
+    group: root
+  ignore_errors: yes
+
+- name: Register quando1 container IP
+  command: sh /storage/docker/install/check.sh
+  register: quandoo2ip
+  ignore_erros: yes
+
+- name: Copy ssh binary to docker container 
+  shell: docker cp /bin/ssh quandoo1:/bin/
+
+- name: Check ssh is open on second container
+  shell: docker exec -t quandoo1 -c nc quandoo2ip.stdout 22
+
+- name: SSH into container 1
+  shell: docker exec -t quandoo1 /bin/ssh -c -i .ssh/id_rsa docker_root@quando2ip.stdout -vvv

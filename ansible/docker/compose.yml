@@ -1,0 +1,6 @@
+  172  yum install epel-release
+  173  yum install -y python-pip
+  174  pip install docker-compose
+  175  pip install --upgrade pip
+  176  pip install docker-compose
+  177  yum upgrade python*

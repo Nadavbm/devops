@@ -1,0 +1,46 @@
+'''Configure SSH slave for Jenkins master:'''
+
+To configure ssh agent for Jenkins, create key pairs on the slave and transfer the private key to Jenkins master.
+
+In ssh communication for Jenkins, the master will use the private key and the slave will use the public key.
+
+----
+
+Go to http://jenkins-master:8080 via browser:
+
+Install SSH agent on Jenkins master --> Manage plugins -> Available plugins -> Install SSH agent plugin
+
+----
+
+In Jenkins slave install openssh-server:
+
+'''sudo yum install openssh-server'''
+
+Create user for Jenkins on the slave node:
+
+'''sudo adduser jenkins'''
+
+'''sudo passwd jenkins'''
+
+'''sudo usermod -aG wheel jenkins'''
+
+Log in as jenkins user and create .ssh directory and authorized_keys file:
+
+'''touch ~/.ssh/authorized_keys'''
+
+Create public and private key pairs on the slave node:
+
+'''cd ~/.ssh/; ssh-keygen -t rsa -C "slave_hostname" -f "slave_hostname"'''
+
+Add the public key to the authorized_keys file:
+
+'''cat slave_hostname.pub >> ~/.ssh/authorized_keys'''
+
+   38  echo "jenkins ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/jenkins-slave
+   39  echo 'Defaults   !requiretty' | sudo tee --append /etc/sudoers.d/jenkins-slave
+   40  sudo chmod 0440 /etc/sudoers.d/jenkins-slave
+   41  sudo mkdir /home/jenkins/.ssh
+   42  sudo chown -R jenkins /home/jenkins/.ssh
+   43  sudo chmod 700 /home/jenkins/.ssh
+   44  sudo touch /home/jenkins/.ssh/authorized_keys
+   45  sudo chmod 600 /home/jenkins/.ssh/authorized_keys

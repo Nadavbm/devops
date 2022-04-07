@@ -1,0 +1,116 @@
+---
+
+- name: Add docker repo
+  shell: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+- name: Add kubernets repo
+  template:
+    src: kubernetes.repo.j2
+    dest: /etc/yum.repos.d/kubernetes.repo
+    mode: 644
+    owner: root
+    group: root
+  ignore_erros: yes
+
+- name:  Install yum packages
+  yum: name={{ item }} state=present
+  with_items:
+#    - docker
+    - kubelet
+    - kubeadm
+    - kubectl
+  ignore_erros: yes
+
+#- name: install docker-py package with pip
+#  pip: name={{ item }} state=present
+#  with_items:
+#    - docker
+#    - docker-py
+#  ignore_errors: yes
+
+- name: Enable docker service
+  service: name={{item}} enabled=yes
+  with_items:
+#    - docker
+    - kubelet
+  ignore_errors: yes
+
+- name: Start docker service
+  service: name={{item}} state=started
+  with_items:
+#    - docker
+    - kubelet
+  ignore_errors: yes
+
+- name: Initialize Kubeadm on master
+  shell: kubeadm init --apiserver-advertise-address={{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }} --pod-network-cidr=10.240.0.0/16
+  when: inventory_hostname in groups['master']
+  ignore_errors: yes
+
+- name: Master IP output
+  shell: hostname -i
+  when: inventory_hostname in groups['master']
+  register: master
+
+- name: Get Cluster api Token
+  shell: kubeadm token list | tail -1 | cut -f 1 -d " "
+  when: inventory_hostname in groups['master']
+  register: token
+
+- name: Get Cluster Hash
+  shell: "openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'"
+  when: inventory_hostname in groups['master']
+  register: hash
+
+- name: Get Cluster API serve port
+  shell: netstat -tulpn |grep kube-apiserve | awk '{ print $4 }' | sed 's/.*://'
+  when: inventory_hostname in groups['master']
+  register: port
+
+- name: "Add K8S Token and Hash to dummy host"
+  add_host:
+    name:   "join_params"
+    master: "{{ master.stdout }}"
+    token:  "{{ token.stdout }}"
+    hash:   "{{ hash.stdout }}"
+    port:   "{{ port.stdout }}"
+
+- name: Verify HASH register
+  debug:
+    msg: "K8S Cluster token is {{ hostvars['join_params']['token'] }}"
+  when: inventory_hostname in groups['nodes']
+
+- name: Verify TOKEN register
+  debug:
+    msg: "K8S Cluster Hash is  {{ hostvars['join_params']['hash'] }}"
+  when: inventory_hostname in groups['nodes']  
+
+- name: Verify MASTER register
+  debug:
+    msg: "K8S Master is  {{ hostvars['join_params']['master'] }}"
+  when: inventory_hostname in groups['nodes']
+
+- name: Verify MASTER register
+  shell: >
+    kubeadm join --token={{ hostvars['join_params']['token'] }}
+    --discovery-token-ca-cert-hash sha256:{{ hostvars['join_params']['hash'] }}
+    {{  hostvars['join_params']['master']  }}:{{  hostvars['join_params']['port']  }}
+  when: inventory_hostname in groups['nodes']
+
+- name: Get nodes list in the cluster
+  shell: "mkdir -p $HOME/.kube && sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config && sudo chown $(id -u):$(id -g) $HOME/.kube/config && cat ~/.kube/config"
+  when: inventory_hostname in groups['master']
+
+- name: Apply kube-flannel pod on master
+  shell: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+  when: inventory_hostname in groups['master']
+
+- name: Get nodes list in the cluster
+  shell: kubectl get nodes
+  when: inventory_hostname in groups['master']
+
+- name: Get nodes list in the cluster
+  shell: kubectl get pods --all-namespaces
+  when: inventory_hostname in groups['master']
+
+

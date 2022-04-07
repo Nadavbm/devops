@@ -1,0 +1,31 @@
+---
+
+- name: Install Laravel with Composer
+  shell: cd /usr/share/nginx/html && composer create-project laravel/laravel {{ appName }}
+  ignore_errors: yes
+- name: Verify Nginx config
+  shell: nginx -t
+  ignore_errors: yes
+- name: Restart Nginx service
+  service: name={{item}} state=restarted
+  with_items:
+    - nginx
+  ignore_errors: yes
+
+- name: Set permissions on the App storage in nginx
+  shell: chown -R apache:root /usr/share/nginx/html/{{ appName }}/storage/*
+  ignore_errors: yes
+- name: Set permissions	on the App storage in nginx
+  shell: chown -R apache:root /usr/share/nginx/html/{{ appName }}/bootstrap/cache
+  ignore_errors: yes
+- name: Manage SELinux to avoid issues in app permissions1
+  shell: semanage fcontext -a -t httpd_sys_rw_content_t '/usr/share/nginx/html/{{ appName }}/bootstrap/cache(/.*)?'
+  ignore_errors: yes
+- name:	Manage SELinux to avoid	issues in app permissions2
+  shell: semanage fcontext -a -t httpd_sys_rw_content_t '/usr/share/nginx/html/{{ appName }}/storage(/.*)?'
+  ignore_errors: yes
+- name: Manage SELinux to avoid issues in app permissions3
+  shell: restorecon -Rv '/usr/share/nginx/html/{{ appName }}'
+  ignore_errors: yes
+#- name: Manage SELinux to avoid issues in app permissions3
+#  shell: restorecon -Rv '/usr/share/nginx/html/{{ appName }}

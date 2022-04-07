@@ -1,0 +1,49 @@
+---
+
+- name: Remove all docker packages
+  shell: yum remove -y docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-selinux  docker-engine-selinux docker-engine
+  ignore_errors: yes
+
+- name: Add yum config repo
+  shell: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+  ignore_errors: yes
+
+- name: Create data dirs
+  shell: mkdir -p /data/docker/registry/{certs,auth,images} && mkdir -p /data/docker/install
+  ignore_errors: yes
+
+- name: Download docker packages
+  get_url:
+    url: "{{ URL }}"
+    dest: "{{ DIR }}"
+    mode: 0440
+  ignore_errors: yes
+
+- name: Install docker package
+  shell: yum install {{ DIR }}/docker-ce-18.09.0-3.el7.x86_64.rpm -y
+  ignore_errors: yes
+
+- name: Yum install docker
+  yum: name={{ item }} state=latest
+  with_items:
+        - docker-ce
+        - docker-ce-cli
+        - container.io
+  ignore_errors: yes
+
+- name: Install docker package
+  shell: yum install {{ DIR }}/docker-ce-18.09.0-3.el7.x86_64.rpm -y
+  ignore_errors: yes
+
+- name: Enable docker service
+  service: name={{item}} enabled=yes
+  with_items:
+    - docker-ce
+  ignore_errors: yes
+
+- name: Start docker service
+  service: name={{item}} state=started
+  with_items:
+    - docker
+  ignore_errors: yes
+

@@ -1,0 +1,61 @@
+---
+
+- name: Copy Docker first Image to swarm
+  template:
+    src: Dockerfile.1.j2
+    dest: /storage/docker/images/1/Dockerfile
+    mode: 644
+    owner: root
+    group: root
+  ignore_errors: yes
+
+- name: Copy Docker second Image to swarm
+  template:
+    src: Dockerfile.2.j2
+    dest: /storage/docker/images/2/Dockerfile
+    mode: 644
+    owner: root
+    group: root
+  ignore_errors: yes
+
+- name: Add supervisor to first image
+  template:
+    src: supervisord.conf.j2
+    dest: /storage/docker/images/1/supervisord.conf
+    mode: 644
+    owner: root
+    group: root
+  ignore_errors: yes
+
+- name: Add supervisor to second image
+  template:
+    src: supervisord.conf.j2
+    dest: /storage/docker/images/2/supervisord.conf
+    mode: 644
+    owner: root
+    group: root
+  ignore_errors: yes
+
+- name: Build docker image from Dockerfile
+  shell: cd /storage/docker/images/1/ && docker build -t quandoo1 .
+  ignore_errors: yes
+
+- name: Build docker image from Dockerfile
+  shell: cd /storage/docker/images/2/ && docker build -t quandoo2 .
+  ignore_errors: yes
+
+- name: List images
+  shell: docker image ls -a
+
+- name: Create network in Docker
+  shell: docker network create -d bridge quandoo
+  ignore_errors: yes
+
+- name: run the site in a docker container
+  shell: docker run --name quandoo1 -d -p 2222:22 --network quandoo quandoo1
+
+- name: run the site in a docker container
+  shell: docker run --name quandoo2 -d -p 2223:22 --network quandoo quandoo2
+
+- name: Check if container is running
+  shell: docker ps

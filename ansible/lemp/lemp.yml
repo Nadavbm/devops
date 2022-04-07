@@ -1,0 +1,14 @@
+---
+
+- name: Install LEMP on CentOS 7
+  hosts: wp
+  remote_user: root
+  become: yes
+  roles:
+   - common
+   - nginx
+   - mariadb
+   - php
+#   - phpmyadmin
+
+##############################

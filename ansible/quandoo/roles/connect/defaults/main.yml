@@ -1,0 +1,5 @@
+---
+
+ipFilter: --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'
+
+

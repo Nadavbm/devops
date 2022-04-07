@@ -1,0 +1,109 @@
+---
+
+- name: Reset Kubernetes Cluster completely
+  hosts: k8s
+  user: root
+  become: yes
+  tasks:
+############## Remove nodes from Cluster ###############
+  - name: Drain nodes from cluster
+    shell: kubectl drain k8s-node1 --delete-local-data --force --ignore-daemonsets
+    when: inventory_hostname in groups['master']
+    ignore_errors: yes
+
+  - name: Remove nodes from cluster
+    shell: kubectl delete node k8s-node1
+    when: inventory_hostname in groups['master']
+    ignore_errors: yes
+
+  - name: Drain nodes from cluster
+    shell: kubectl drain k8s-node2 --delete-local-data --force --ignore-daemonsets
+    when: inventory_hostname in groups['master']
+    ignore_errors: yes
+
+  - name: Remove nodes from cluster
+    shell: kubectl delete node k8s-node2
+    when: inventory_hostname in groups['master']
+    ignore_errors: yes
+
+  - name: Check if nodes in the Cluster still
+    shell: kubectl get nodes
+    when: inventory_hostname in groups['master']
+    ignore_errors: yes
+################ Remove configuration from MAter ################
+  - name: Backup etcd dir
+#    shell: yes | mv /var/lib/etcd /var/lib/etcd.bak
+    shell: rm -rf /var/lib/etcd
+    when: inventory_hostname in groups['master']
+    ignore_errors: yes
+
+  - name: Check if nodes in the Cluster still
+    shell: kubectl get nodes
+    when: inventory_hostname in groups['master']
+    ignore_errors: yes
+
+  - name: Reset kubeadm
+    shell:  yes | kubeadm reset
+    when: inventory_hostname in groups['master']
+    ignore_errors: yes
+
+  - name: Backup kube config
+    shell: yes | mv $HOME/.kube/config $HOME/.kube/config.bak
+    when: inventory_hostname in groups['master']
+    ignore_errors: yes
+################## Clean nodes configurations #################
+  - name: Backup kubelet config
+    shell: yes | mv /etc/kubernetes/kubelet.conf /etc/kubernetes/kubelet.conf.bak
+    when: inventory_hostname in groups['nodes']
+    ignore_errors: yes
+
+  - name: Backup kubelet bootstrap config
+    shell: yes | mv /etc/kubernetes/bootstrap-kubelet.conf /etc/kubernetes/bootstrap-kubelet.conf.bak
+    when: inventory_hostname in groups['nodes']
+    ignore_errors: yes
+
+  - name: Backup ca certificate
+    shell: yes | mv /etc/kubernetes/pki/ca.crt /etc/kubernetes/pki/ca.crt.bak
+    when: inventory_hostname in groups['nodes']
+    ignore_errors: yes
+
+  - nme: Start docker service
+    service: name={{item}} state=stopped
+    with_items:
+      - kubelet
+    ignore_errors: yes
+      
+#    - docker
+#        - kubelet
+#          ignore_errors: yesame: Stop all related services
+
+
+#  140  kubectl get nodes
+#  141  kubectl drain k8s-node1 --delete-local-data --force --ignore-daemonsets
+#  142  kubectl delete node k8s-node1
+#  143  kubectl get nodes
+#  144  kubectl drain k8s-node2 --delete-local-data --force --ignore-daemonsets
+#  145  kubectl delete node k8s-node2
+#  146  kubectl get nodes
+#  147  kubeadm reset
+#  148  kubectl get nodes
+#  149  kubectl get pods --all-namespaces
+#  151  mv /var/lib/etcd /var/lib/etcd.bak
+
+#k8s-node1 | FAILED | rc=1 >>
+#[preflight] Running pre-flight checkserror execution phase preflight: [preflight] Some fatal errors occurred:
+#        [ERROR FileAvailable--etc-kubernetes-kubelet.conf]: /etc/kubernetes/kubelet.conf already exists
+#        [ERROR FileAvailable--etc-kubernetes-bootstrap-kubelet.conf]: /etc/kubernetes/bootstrap-kubelet.conf already exists
+#        [ERROR Port-10250]: Port 10250 is in use
+#        [ERROR FileAvailable--etc-kubernetes-pki-ca.crt]: /etc/kubernetes/pki/ca.crt already exists
+#[preflight] If you know what you are doing, you can make a check non-fatal with `--ignore-preflight-errors=...`non-zero return code
+#
+#k8s-node2 | FAILED | rc=1 >>
+#[preflight] Running pre-flight checkserror execution phase preflight: [preflight] Some fatal errors occurred:
+#        [ERROR FileAvailable--etc-kubernetes-kubelet.conf]: /etc/kubernetes/kubelet.conf already exists
+#        [ERROR FileAvailable--etc-kubernetes-bootstrap-kubelet.conf]: /etc/kubernetes/bootstrap-kubelet.conf already exists
+#        [ERROR Port-10250]: Port 10250 is in use
+#        [ERROR FileAvailable--etc-kubernetes-pki-ca.crt]: /etc/kubernetes/pki/ca.crt already exists
+#[preflight] If you know what you are doing, you can make a check non-fatal with `--ignore-preflight-errors=...`non-zero return code
+
+#  register: master

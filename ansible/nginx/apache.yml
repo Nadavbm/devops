@@ -1,0 +1,7 @@
+---
+- name: ngiNx installation playbook
+  hosts: nginx
+  become: yes
+  roles:
+   - nginx
+   - firewall

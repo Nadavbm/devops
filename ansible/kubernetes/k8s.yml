@@ -1,0 +1,11 @@
+---
+
+- name: Kubernetes cluster on CentOS7
+  hosts: k8s
+  user: root
+  become: yes
+  roles:
+    - sys
+    - docker
+    - k8s
+    - cfg

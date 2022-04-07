@@ -1,0 +1,36 @@
+---
+
+- name: Add user and deploy SSH Keys for SSH authentication
+  hosts: swarm
+  remote_user: root
+  become: yes
+  vars:
+    user: userName
+    devuser: ALL
+    pubkey: ssh-rsa balabalbala
+    nopasswd: "NOPASSWD: ALL"
+  tasks:
+  ############################User Add to Linux OS#############################
+  - name: Create user in linux
+    shell: useradd {{ user }}
+  ######################Configure Acces with SSH Keys##########################
+  - name: Create ssh directory
+    shell: mkdir -p /home/{{ user }}/.ssh
+  - name: Echo public key to authorized_keys file
+    shell: echo {{ pubkey }} >> /home/{{ user }}/.ssh/authorized_keys
+  - file:
+      path: /home/{{ user }}/.ssh
+      owner: '{{ user }}'
+      group: '{{ user }}'
+      state: directory
+      mode: 0700
+  - file:
+      path: /home/{{ user }}/.ssh/authorized_keys
+      owner: '{{ user }}'
+      group: '{{ user }}'
+      mode: 0600  
+#  - name: Assign Permissions to ssh directory
+#    shell: chown -R {{ user }}. /home/{{ user }}
+  ############################Allow User substitue#############################
+  - name: Edit sudoers files
+    shell: echo "{{ user }} ALL=({{ devuser }}) {{ nopasswd }}" >> /etc/sudoers

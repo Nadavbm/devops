@@ -1,0 +1,28 @@
+---
+
+- name: Install Python Pip
+  yum: name={{ item }} state=present
+  with_items:
+    - python-pip
+  ignore_errors: yes
+
+- name: Install pexpect with pip
+  pip:
+    name: pexpect
+
+
+
+# Example for pexpect usage for creating ssh keys
+#- name: Test playbook
+#  hosts: all
+#  remote_user: admin
+#  tasks:
+#    - name: Create ssh keys
+#      expect:
+#        command: ssh-keygen -t rsa
+#        echo: yes
+#        timeout: 5
+#        responses:
+#          "file": "" ## Enter file in which to save the key (/home/admin/.ssh/id_rsa)
+#          "Overwrite": "n" ## Overwrite (y/n)? 
+#          "passphrase": "" ## Enter passphrase (empty for no passphrase)

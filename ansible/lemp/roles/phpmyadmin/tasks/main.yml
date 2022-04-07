@@ -1,0 +1,25 @@
+---
+
+- name: Install phpMyAdmin on the server
+  yum: name={{ item }} state=latest
+  with_items:
+    - phpMyAdmin
+  ignore_errors: yes
+
+- name: Add phpMyAdmin configuration file
+  template:
+    src: phpMyAdmin.conf.j2
+    dest: /etc/httpd/conf.d/phpMyAdmin.conf
+    owner: root
+    group: root
+    mode: 0755
+  ignore_errors: yes
+
+- name: Add config inc file to phpMyAdmin
+  template:
+    src: config.inc.php.j2
+    dest: /etc/phpMyAdmin/config.inc.php
+    owner: root
+    group: root
+    mode: 0755
+  ignore_errors: yes

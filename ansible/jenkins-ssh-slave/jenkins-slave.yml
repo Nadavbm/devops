@@ -1,0 +1,9 @@
+---
+- name: Jenkins slave installation
+  hosts: jenkins
+  become: yes
+  roles:
+   - common
+   - pexpect
+   - sudo-user
+   - ssh-keys

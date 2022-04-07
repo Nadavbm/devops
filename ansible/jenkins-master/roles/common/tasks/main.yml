@@ -1,0 +1,24 @@
+---
+
+- name: Install epel-release
+  shell: yum insatll -y epel-release
+  ignore_errors: yes
+
+- name: Update yum
+  shell: yum update -y
+  ignore_errors: yes 
+
+- name: Install common yum packages
+  yum: name={{ item }} state=present
+  with_items:
+    - wget
+    - openssh-server
+    - google-cloud-sdk
+    - mlocate
+    - curl
+    - htop
+    - java-1.8.0-openjdk
+  ignore_errors: yes
+
+- name: Show Java version
+  shell: java -version

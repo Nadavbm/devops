@@ -1,0 +1,70 @@
+#!/bin/sh
+#
+###### Add parameter for executing function #######
+PARAM="$1"
+#
+#
+# Date of backup
+DATE="$( date +%F )"
+#
+#
+###### Vaiable definition for the script functions #######
+# Local directory for the backups
+LOCAL="/backup/jenkins"
+#
+#
+# Relevant dirs for Jenkins backups
+JNKDIR="/var/lib/jenkins"
+JNKCFG="$JNKDIR/config.xml"
+JNKXML="$( cd $JNKDIR && find . -name "*.xml" -maxdepth 1 -type f)"
+JNKJOB="$( cd $JNKDIR && find jobs/ -type d -maxdepth 2 )"
+JNKUSR="$JNKDIR/users/"
+#
+#
+# Upload back to a google bucket
+EXTERNAL="gs://jenkins"
+BCKARRAY="$( find $LOCAL/*.tar.gz )"
+
+######### The functions #########
+checkBackupConfig() {
+        echo -e "\e[92mToday is the $DATE"
+        echo -e "\e[90m=================="
+	echo -e "\e[93mThe local backup dir: $LOCAL"
+	echo -e "\e[90m==================="
+	echo -e "\e[95mUpload bucket is $EXTERNAL"
+	echo -e "\e[90m=================="
+        echo -e "\e[94mJenkins directory set is $JNKDIR"
+	echo -e "\e[90m=================="
+        echo -e "\e[94mConfig files for Jenkins are: \n$JNKXML"
+        echo -e "\e[90m=================="
+	echo -e "\e[94mJenkins folder structure: \n$JNKJOB"
+}
+
+jenkinsBackup() {
+	mkdir -p $LOCAL/$DATE_jenkins
+	JNKLIST=$( cut -d' ' -f5 ${JNKXML} | paste -d' ' -s )
+	JNKARR=( ${JNKLIST} )
+	for i in ${JNKARR[@]}; do
+		cd /var/lib/jenkins && rsync $i $LOCAL/$DATE_jenkins/
+	done
+#	rsync -avz --include="*.xml" --exclude '*' $JNKDIR/ $LOCAL/$DATE_jenkins
+#	cd $LOCAL && tar -zcvf $DATE_jenkins.tar.gz $DATE_jenkins/
+}
+
+uploadBackup() {
+	for i in "${BCKARRAY[@]}"; do
+                gsutil cp $i $EXTERNAL/
+        done
+}
+
+help() {
+    grep "^function" $0
+}
+
+
+
+if [ "_$1" = "_" ]; then
+    help
+else
+    "$@"
+fi

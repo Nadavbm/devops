@@ -1,0 +1,24 @@
+---
+
+- name: Remove all changes from docker swarm
+  hosts: swarm
+  remote_user: root
+  become: yes
+  tasks:
+  - name: Remove all files and dirs from /storage/docker/images
+    shell: rm -rf /storage/docker/images/*
+
+  - name: Also hidden files
+    shell: rm -rf /storage/docker/images/.ssh/
+
+  - name: Stop all containers
+    shell: docker container stop $(docker container ls -a -q)
+    ignore_errors: yes
+
+  - name: Delete all containers
+    shell: docker container rm $(docker container ls -a -q)
+    ignore_errors: yes
+
+  - name: Delete all images
+    shell: docker image rm $(docker image ls -a -q)
+    ignore_errors: yes

@@ -1,0 +1,16 @@
+---
+- name: Create a sudo user for Jenkins slave called Jenkins
+  command: useradd -m jenkins
+  ignore_errors: yes
+
+- name: Set password for Jenkins user
+  expect:
+    command: passwd jenkins
+    responses:
+      'New password: ': 'PaSSw0rd'
+      'Retype new password: ': 'PaSSw0rd'
+
+- name: Add Jenkins to sudoers
+  command: gpasswd -a jenkins wheel  
+  ignore_errors: yes
+

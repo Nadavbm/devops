@@ -1,0 +1,14 @@
+# Firewall configuration written by system-config-firewall
+# Manual customization of this file is not recommended.
+*filter
+:INPUT ACCEPT [0:0]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+-A INPUT --dport 2376 -p tcp -m tcp -m state --state NEW,ESTABLISHED -j ACCEPT
+-A INPUT --dport 7946 -p tcp -m tcp -m state --state NEW,ESTABLISHED -j ACCEPT
+-A INPUT --dport 7946/-p udp -m tcp -m state --state NEW,ESTABLISHED -j ACCEPT
+-A INPUT --dport 4789 -p tcp -m tcp -m state --state NEW,ESTABLISHED -j ACCEPT
+-A INPUT --dport 80 -p tcp -m tcp -m state --state NEW,ESTABLISHED -j ACCEPT
+-A INPUT --dport 443 -p tcp -m tcp -m state --state NEW,ESTABLISHED -j ACCEPT
+COMMIT
+

@@ -1,0 +1,19 @@
+---
+
+- name: Install common yum packages
+  yum: name={{ item }} state=present
+  with_items:
+    - wget
+    - nano
+    - mlocate
+    - openssh-server
+    - htop
+    - lspci
+    - net-tools
+    - vim
+    - find
+  ignore_errors: yes
+
+- name: Set node hostname with nano
+  shell: "{{ inventory_hostname }} > /etc/hostname"
+

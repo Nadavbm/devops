@@ -1,0 +1,72 @@
+---
+
+- name: install epel release
+  shell: yum -y install epel-release
+
+- name: Install yum packages
+  yum: name={{ item }} state=present
+  with_items:
+    - epel-release
+    - wget
+    - vim
+    - htop
+    - yum-utils 
+    - device-mapper-persistent-data
+    - lvm2
+    - python-pip
+    - rsync
+    - git
+    - openssl
+
+- name: Ensure hostname set
+  hostname: name={{ inventory_hostname }}
+  when: not inventory_hostname|match('(\d{1,3}\.){3}\d{1,3}')
+
+- name: remove and create hosts file
+  shell: printf "127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4 \n
+                 ::1         localhost localhost.localdomain localhost6 localhost6.localdomain6 \n"  > /etc/hosts
+
+- name: Add IP address of all hosts to all hosts
+  lineinfile:
+    dest: /etc/hosts
+    line: '{{ hostvars[item].ansible_host }} {{ hostvars[item].inventory_hostname }}'
+    state: present
+  with_items: '{{ groups.k8s }}'
+
+- name: Set host name
+  shell: hostnamectl set-hostname '{{ inventory_hostname }}'
+
+- name: Add nameservers from Google
+  shell: echo 'nameserver     8.8.8.8' >> /etc/resolve.conf
+  ignore_errors: yes
+- name: Add nameservers from Google
+  shell: echo 'nameserver     8.8.4.4' >> /etc/resolve.conf
+  ignore_errors: yes
+
+- name: Disable firewall and Network Manager service
+  service: name={{item}} disable=yes
+  with_items:
+    - firewalld
+  ignore_errors: yes
+
+- name: Stop Firewalld and Network Manager services
+  service: name={{item}} state=stopped
+  with_items:
+    - firewalld
+  ignore_errors: yes
+
+- name: bash exec
+  shell: exec bash
+
+- name: Set SELINUX
+  selinux:
+    state: disabled
+
+- name: Swap off
+  shell: swapoff -a && sed -e '/swap/ s/^#*/#/' -i /etc/fstab
+
+- name: Set net filter
+  shell: modprobe br_netfilter
+
+- name: Set bridge mode
+  shell: echo '1' > /proc/sys/net/bridge/bridge-nf-call-iptables

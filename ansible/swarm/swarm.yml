@@ -1,0 +1,82 @@
+---
+
+- name: Deploy Docker swarm on CentOS7
+  hosts: docker
+  remote_user: root
+  become: yes
+  vars:
+    URL: https://download.docker.com/linux/centos/7/x86_64/stable/Packages/docker-ce-18.09.0-3.el7.x86_64.rpm
+##    URL: https://download.docker.com/linux/centos/7/x86_64/stable/Packages/docker-ce-18.09.0.ce-1.el7.centos.x86_64.rpm
+    DIR: /storage/docker/install
+    USER: root
+  ############################# Common Packages ###############################
+  tasks:
+  - name: Install Common packages
+    yum: name={{ item }} state=latest
+    with_items:
+          - wget
+          - mlocate
+          - yum-utils
+          - device-mapper-persistent-data
+          - lvm2
+  ########################### Directories Structure ###########################
+  - name: Create direcotry for swarm
+    shell: mkdir -p /storage/docker/install
+  ############################# Firewall Rules ################################
+  - name: Add iptable configuration file
+    template:
+      src: files/iptables.j2
+      dest: /etc/sysconfig/iptables
+      owner: root
+      group: root
+      mode: 0644
+  - name: Configure persistent Port Forwarding to Docker
+    template:
+      src: files/sysctl.conf.j2
+      dest: /etc/sysctl.conf
+      owner: root
+      group: root
+      mode: 0644
+  - name: Reload IPtables
+    service: name={{item}} daemon_reload=yes
+    with_items:
+      - iptables
+    ignore_errors: yes
+  ########################### Docker Installation #############################
+  - name: Add yum config repo
+    shell: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+    ignore_errors: yes
+  - name: Download docker packages
+    get_url:
+      url: "{{ URL }}"
+      dest: "{{ DIR }}"
+      mode: 0440
+    ignore_errors: yes
+  - name: Install docker package
+    shell: yum install {{ DIR }}/docker-ce-18.09.0-3.el7.x86_64.rpm -y
+    ignore_errors: yes
+  - name: Yum install docker
+    yum: name={{ item }} state=latest
+    with_items:
+          - docker-ce
+          - docker-ce-cli
+          - container.io
+    ignore_errors: yes
+  - name: Install docker package
+    shell: yum install {{ DIR }}/docker-ce-18.09.0-3.el7.x86_64.rpm -y
+    ignore_errors: yes
+  - name: Enable docker service
+    service: name={{item}} enabled=yes
+    with_items:
+      - docker-ce
+    ignore_errors: yes
+  - name: Start docker service
+    service: name={{item}} state=started
+    with_items:
+      - docker
+    ignore_errors: yes
+  ############################ Docker post Config #############################
+  - name: Add user to docker group
+    shell: usermod -aG docker {{ USER }}
+  - name: Check if docker is running
+    shell: docker run hello-world

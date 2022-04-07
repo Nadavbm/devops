@@ -1,0 +1,38 @@
+---
+
+- name: Copy plugins text file to the server
+  copy:
+    src: /files/plugins.txt
+    dest: /tmp/plugins.txt
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Install all plugins by the text file
+  shell: /usr/local/bin/plugins.sh /tmp/plugins.txt
+
+- name: Copy relevant tar file to the server
+  copy:
+    src: /files/config.tar.gz
+    dest: /tmp/config.tar.gz
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Unzip tar file
+  shell: tar -xvf /tmp/config.tar.gz /var/lib/jenkins
+
+- name: Verify .xml files in Jenkins home dir
+  shell: find /var/lib/jenkins -maxdepth -name "*.xml" -type f 
+
+- name: Verify jobs .xml files in place
+  shell: find /var/lib/jenkins/jobs/ -maxdepth 2 -name "*.xml" -type f
+
+- name: Restart Jenkins daemons
+  service: name={{item}} state=restarted enabled=yes
+  with_items:
+    - jenkins
+  ignore_errors: yes
+
+- name: Check Jenkins configuration
+  shell: chkconfig jenkins on

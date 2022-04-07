@@ -1,0 +1,53 @@
+---
+
+- name: Set the correct permissions to Jenkins user
+  become: yes
+  become_user: jenkins
+  shell: chown -R jenkins /home/jenkins/.ssh
+
+- name: Set the correct permissions to Jenkins user
+  become: yes
+  become_user: jenkins
+  shell: chmod 700 /home/jenkins/.ssh
+
+- name: Set the correct permissions to Jenkins user
+  become: yes
+  become_user: jenkins
+  shell: chmod 600 /home/jenkins/.ssh/authorized_keys
+
+- name: Register hostname in playbook - Use later for certifactes names
+  become: yes
+  become_user: jenkins
+  shell: cat /etc/hostname
+  register: hostname_output
+
+- name: Create a key pairs for Jenkins ssh agent 
+  become: yes
+  become_user: jenkins
+  expect:
+   command: cd /home/jenkins/.ssh/; ssh-keygen -t rsa -C "{{ hostname_output }}" -f "{{ hostname_output }}"
+   echo: yes
+   timeout: 5
+   responses:
+    "passphrase": "" ## Enter passphrase (empty for no passphrase)
+#    'Enter passphrase (empty for no passphrase): ': 'PaSSw0rd'
+#    'Enter same passphrase again: ': 'PaSSw0rd'
+
+- name: Create authorized_keys file in ~/.ssh/authorized_keys
+  become: yes
+  become_user: jenkins 
+  command: touch ~/.ssh/authorized_keys
+
+- name: Copy the public key to the authorized_keys - To recognized the private key that Jenkins Master uses
+  become: yes
+  become_user: jenkins
+  command: cd ~/.ssh/; {{ hostname_output }}.pub >> authorized_keys
+
+- name: Create a key pairs for Jenkins ssh agent 
+  become: yes
+  become_user: jenkins
+  expect:
+   command: scp /home/jenkins/.ssh/apache1 root@192.168.178.12:/root/.ssh/
+   responses:
+    "root@192.168.178.12's password: ": 'PaSSw0rd'
+# Use password of root user in Jenkins Master to copy the private key to Jenkins

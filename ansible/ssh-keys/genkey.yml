@@ -1,0 +1,45 @@
+---
+
+- name: Add user and deploy SSH Keys for SSH authentication
+  hosts: swarm
+  remote_user: nadav.benmazia
+  become: yes
+  vars:
+    user: userName
+  tasks:
+  ######################Configure Acces with SSH Keys##########################
+  - name: Create ssh directory
+    shell: mkdir -p /home/{{ user }}/.ssh
+    ignore_errors: yes
+
+  - name: Generate ssh-keys for dev user
+    user:
+      name: '{{ user }}'
+      generate_ssh_key: yes
+      ssh_key_bits: 2048
+      ssh_key_file: /home/{{ user }}/.ssh/id_rsa 
+    ignore_errors: yes
+
+  - file:
+      path: /home/{{ user }}/.ssh
+      owner: '{{ user }}'
+      group: '{{ user }}'
+      state: directory
+      mode: 0700
+    ignore_errors: yes
+
+  - name: Copy the public key created by google for next playbook
+    shell: cat /home/{{ user }}/.ssh/authorized_keys  
+    ignore_errors: yes
+
+  - name: Assign Permissions to ssh directory
+    shell: chown -R {{ user }}. /home/{{ user }}/.ssh
+    ignore_errors: yes
+
+#  - name: Echo public key to authorized_keys file
+#    shell: /home/{{ user }}/.ssh/id_rsa.pub >> /home/{{ user }}/.ssh/authorized_keys
+#    ignore_errors: yes
+
+  - name: Get id_rsa.pub key as an output
+    shell: cat /home/{{ user }}/.ssh/id_rsa.pub
+    ignore_errors: yes

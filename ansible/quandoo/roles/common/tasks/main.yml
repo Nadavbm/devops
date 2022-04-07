@@ -1,0 +1,36 @@
+---
+
+- name: Update yum
+  shell: yum update -y
+  ignore_errors: yes
+
+- name: Epel-release install
+  shell: yum install -y epel-release
+  ignore_errors: yes
+
+- name: Install common packages for docker swarm
+  yum: name={{ item }} state=present
+  with_items:
+    - htop
+    - vim
+    - wget
+    - curl
+    - python-pip 
+    - mlocate
+    - yum-utils
+    - device-mapper-persistent-data
+    - lvm2
+  ignore_errors: yes
+
+- name: install the package, force upgrade
+  pip: 
+    name: pip
+    state: latest
+  ignore_errors: yes
+
+- name: install docker-py package
+  pip: name={{ item }} state=present
+  with_items:
+    - docker
+    - docker-py
+  ignore_errors: yes

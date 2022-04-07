@@ -1,0 +1,173 @@
+---
+
+- name: Install LAMP stack on CentOS
+  hosts: lemp
+  remote_user: root
+  become: yes
+  vars:
+    password: "Pa$$w0rd"
+  tasks:
+  - name: Prerequirements Epel-Release
+    shell: rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY*
+    ignore_errors: yes
+
+  - name: Install EPEL
+    shell: yum -y install epel-release
+    ignore_errors: yes
+
+  - name: Installation of MariaDB
+    yum: name={{ item }} state=present
+    with_items:
+      - mariadb
+      - mariadb-server
+    ignore_errors: yes
+
+  - name: Enable MariaDB service
+    service: name={{item}} enabled=yes
+    with_items:
+      - mariadb
+    ignore_errors: yes
+
+  - name: Start mariadb service
+    service: name={{item}} state=started
+    with_items:
+      - mariadb
+    ignore_errors: yes
+
+  - name: Copy mysql_secure_installation script to the server
+    copy:
+      src: files/mysql_secure_installation.sh.j2
+      dest: /root/mysql_secure_installation.sh
+      owner: root
+      group: root
+      mode: 0755
+    ignore_errors: yes
+
+  - name: Run secure installation by Script (Define root password under "vars")
+    shell: cd /root && ./mysql_secure_installation.sh
+    ignore_errors: yes
+
+  - name: Installation of HTTPD
+    yum: name={{ item }} state=present
+    with_items:
+      - httpd
+    ignore_errors: yes
+
+  - name: Enable httpd service
+    service: name={{item}} enabled=yes
+    with_items:
+      - httpd
+    ignore_errors: yes
+
+  - name: Start httpd service
+    service: name={{item}} state=started
+    with_items:
+      - httpd
+    ignore_errors: yes
+
+  - name: Enable firewalld service
+    service: name={{item}} disable=yes
+    with_items:
+      - firewalld
+    ignore_errors: yes
+
+  - name: Stop firewalld service
+    service: name={{item}} state=stopped
+    with_items:
+      - firewalld
+    ignore_errors: yes
+
+  - name: Prerequirements PHP
+    shell: rpm -Uvh http://rpms.remirepo.net/enterprise/remi-release-7.rpm
+    ignore_errors: yes
+
+  - name: install yum utils
+    yum: name={{ item }} state=latest
+    with_items:
+          - yum-utills
+    ignore_errors: yes
+
+  - name: REMI release
+    shell: yum-config-manager --enable remi-php72
+    ignore_errors: yes
+
+  - name: Install php
+    yum: name={{ item }} state=present
+    with_items:
+      - php
+      - php-opcache
+    ignore_errors: yes
+
+  - name: Start httpd service
+    service: name={{item}} state=restarted
+    with_items:
+      - httpd
+    ignore_errors: yes
+
+  - name: Add PHP info file to Web service
+    template:
+      src: files/info.php.j2
+      dest: /var/www/html/info.php
+      owner: root
+      group: root
+      mode: 0755
+    ignore_errors: yes
+
+  - name: Search PHP
+    shell: yum search php
+    ignore_errors: yes
+
+  - name: Install nginx package
+    yum: name={{ item }} state=latest
+    with_items:
+      - php-mysqlnd 
+      - php-pdo 
+      - php-gd 
+      - php-ldap 
+      - php-odbc 
+      - php-pear 
+      - php-xml 
+      - php-xmlrpc 
+      - php-mbstring 
+      - php-soap 
+      - curl 
+      - curl-devel 
+    ignore_errors: yes
+
+  - name: Start httpd service
+    service: name={{item}} state=restarted
+    with_items:
+      - httpd
+    ignore_errors: yes
+
+  - name: Install phpMyAdmin on the server
+    yum: name={{ item }} state=latest
+    with_items:
+      - phpMyAdmin
+    ignore_errors: yes
+
+  - name: Add phpMyAdmin configuration file
+    template:
+      src: phpMyAdmin.conf.j2
+      dest: /etc/httpd/conf.d/phpMyAdmin.conf
+      owner: root
+      group: root
+      mode: 0755
+    ignore_errors: yes
+
+  - name: Add config inc file to phpMyAdmin
+    template:
+      src: files/config.inc.php.j2
+      dest: /etc/phpMyAdmin/config.inc.php
+      owner: root
+      group: root
+      mode: 0755
+    ignore_errors: yes
+
+  - name: Start httpd service
+    service: name={{item}} state=restarted
+    with_items:
+      - httpd
+    ignore_errors: yes
+
+

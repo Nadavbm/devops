@@ -1,0 +1,17 @@
+---
+
+- name: Set directory structure of k8s on all nodes
+  shell: mkdir -p /data/k8s/{git,deploy,tasks}
+
+- name: Clone metrics server repository to Master
+  git: 
+    repo: 'https://github.com/kubernetes-incubator/metrics-server.git'
+    dest: /data/k8s/git/
+  when: inventory_hostname in groups['master']
+
+- name: Clone Google examples
+  git:
+    repo: 'https://github.com/GoogleCloudPlatform/kubernetes-engine-samples.git'
+    dest: /data/k8s/git/
+  when: inventory_hostname in groups['master']
+

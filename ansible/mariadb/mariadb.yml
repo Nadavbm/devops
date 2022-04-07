@@ -1,0 +1,103 @@
+---
+
+- name: Maria DB server installation (Simple)
+  hosts: mariadb
+  remote_user: root
+  become: yes
+  vars:
+    password: "Pa$$w0rd"
+  tasks:
+  - name: Update CentOS 7
+    shell: yum -y update
+    ignore_errors: yes
+
+  - name: Install common packages
+    yum: name={{ item }} state=latest
+    with_items:
+          - mlocate
+          - nano
+          - rsync
+          - iptables-services
+          - percona-xtrabackup
+    ignore_errors: yes
+
+  - name: Download Qpress
+    get_url:
+      url: http://www.quicklz.com/qpress-11-linux-x64.tar
+      dest: /usr/local/bin/qpress-11-linux-x64.tar
+
+  - name: Unzip tar for qPress
+    shell: tar -xvf /usr/local/bin/qpress-11-linux-x64.tar
+    ignore_errors: yes
+
+  - name: Remove tar file
+    shell: rm /usr/local/bin/qpress-11-linux-x64.tar
+
+  - name: Install Maria-DB on CentOS7
+    yum: name={{ item }} state=latest
+    with_items:
+          - mariadb-server
+    ignore_errors: yes
+
+  - name: Enable mariadb service
+    service: name={{item}} enabled=yes
+    with_items:
+      - mariadb
+    ignore_errors: yes
+
+  - name: Start mariadb service
+    service: name={{item}} state=started
+    with_items:
+      - mariadb
+    ignore_errors: yes
+
+  - name: Stop  mariadb service
+    service: name={{item}} state=stopped
+    with_items:
+      - mariadb
+    ignore_errors: yes
+
+  - name: Rsync all files from /var/lib
+    shell: rsync -avz /var/lib/mysql /data/
+
+  - name: Add new configuration file for MariaDB
+    template:
+      src: files/client.cnf.j2
+      dest: /etc/my.cnf.d/client.cnf
+      owner: root
+      group: root
+      mode: 0755
+    ignore_errors: yes
+
+  - name: Add new configuration file for MariaDB
+    template:
+      src: files/my.cnf.j2
+      dest: /etc/my.cnf
+      owner: root
+      group: root
+      mode: 0755
+    ignore_errors: yes
+
+  - name: Start mariadb service
+    service: name={{item}} state=started
+    with_items:
+      - mariadb
+    ignore_errors: yes
+
+  - name: Copy mysql_secure_installation script to the server
+    template:
+      src: files/mysql_secure_installation.sh.j2
+      dest: /root/mysql_secure_installation.sh
+      owner: root
+      group: root
+      mode: 0755
+    ignore_errors: yes
+
+  - name: Run secure installation by Script (Define root password under "vars")
+    shell: cd /root && ./mysql_secure_installation.sh
+    ignore_errors: yes
+
+  - name: Create a directory for moving data
+    shell: mkdir /data/databases
+    ignore_errors: yes
+

@@ -1,0 +1,23 @@
+---
+
+- name: Install relevant python packages for BCrypt
+  pip: name={{ item }} state=present
+  with_items:
+    - py-bcrypt
+  ignore_errors: yes
+
+- name: Add password generate script
+  template:
+    src: bcrypt.py.j2
+    dest: /tmp/bcrypt.py
+    mode: 755
+    owner: root
+    group: root
+  ignore_erros: yes
+
+- name: Generate bcrypt password for admin
+  shell: python /tmp/bcrypt.py
+  register: pass
+
+- name: Echo hash to admin config.xml file
+  shell: sed "s/<passwordHash>#jbcrypt:*/<passwordHash>#jbcrypt:pass.stdout</passwordHash>/g" /varlib/jenkins/users/admin/config.xml

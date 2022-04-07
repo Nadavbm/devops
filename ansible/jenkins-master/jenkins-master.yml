@@ -1,0 +1,9 @@
+---
+- name: Jenkins Master installation
+  hosts: jenkins
+  become: yes
+  roles:
+   - common
+   - firewalls
+   - jenkins
+

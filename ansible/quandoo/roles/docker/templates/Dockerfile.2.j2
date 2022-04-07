@@ -1,0 +1,42 @@
+FROM centos:7
+
+MAINTAINER Nadav Ben Mazia nadavbm@outlook.com
+
+ENV SUPERVISOR_VERSION=4.0.2
+
+RUN \
+    yum install -y epel-release; \
+    yum install -y \
+    python-pip \
+    sudo \
+    nc \
+    openssh \
+    openssh-client \
+    openssh-server && \
+  easy_install pip; \
+  pip install supervisor==${SUPERVISOR_VERSION}
+
+RUN echo "docker_root ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/docker_root && \
+    chmod 0440 /etc/sudoers.d/docker_root
+
+RUN sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+RUN sed -i 's/PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+
+RUN useradd docker_root; usermod -aG wheel docker_root
+
+WORKDIR /home/docker_root/
+RUN mkdir .ssh; chmod -R 700 .ssh/
+
+WORKDIR /home/docker_root/.ssh/
+RUN  echo "    IdentityFile id_rsa" >> /etc/ssh/ssh_config
+
+COPY .ssh/ .
+COPY supervisord.conf /etc/
+
+WORKDIR /home/docker_root/
+
+RUN /usr/bin/ssh-keygen -A
+
+EXPOSE 22
+
+CMD ["/usr/bin/supervisord","--configuration=/etc/supervisord.conf"]

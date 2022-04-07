@@ -1,0 +1,49 @@
+---
+
+#- name: Create ssh directory
+#  shell: mkdir -p /storage/docker/images/.ssh
+#  ignore_errors: yes
+
+- file:
+    path: /storage/docker/images/1/.ssh
+    owner: '{{ USER }}'
+    group: '{{ USER }}'
+    state: directory
+    mode: 0700
+  ignore_errors: yes
+
+- file:
+    path: /storage/docker/images/2/.ssh
+    owner: '{{ USER }}'
+    group: '{{ USER }}'
+    state: directory
+    mode: 0700
+  ignore_errors: yes
+
+- name: Generate ssh-keys for dev user
+  user:
+    name: '{{ USER }}'
+    generate_ssh_key: yes
+    ssh_key_bits: 2048
+    ssh_key_file: /storage/docker/images/1/.ssh/id_rsa
+  ignore_errors: yes
+
+- name: Assign Permissions to ssh directory
+  shell: chown -R {{ USER }}. /storage/docker/images/1/.ssh/
+  ignore_errors: yes
+
+- name: Assign Permissions to ssh directory
+  shell: chmod -R 700 /storage/docker/images/1/.ssh/
+  ignore_errors: yes
+
+- name: Echo public key to authorized_keys file
+  shell: echo /storage/docker/images/1/.ssh/id_rsa.pub > /storage/docker/images/1/.ssh/authorized_keys
+  ignore_errors: yes
+
+- name: Get id_rsa.pub key as an output
+  shell: cat /storage/docker/images/1/.ssh/id_rsa.pub
+  register: pubkey
+  ignore_errors: yes
+
+- name: Echo to second image authorized_keys file
+  shell: echo pubkey.stdout > /storage/docker/images/2/.ssh/authorized_keys

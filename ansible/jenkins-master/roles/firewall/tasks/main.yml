@@ -1,0 +1,14 @@
+---
+- name: Add firewall rule for http and https services
+  command: firewall-cmd --zone=public --add-port=8080/tcp --permanent
+  ignore_errors: True
+
+- name: Add firewall rule for http and https services
+  command: firewall-cmd --zone=public --add-service=http --permanent
+  ignore_errors: True
+
+- name: Reload Firewall configuration
+  command: firewall-cmd --reload
+
+- name: Restart firewalld service
+  service: name=firewalld state=restarted  

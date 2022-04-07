@@ -1,0 +1,27 @@
+---
+
+- name: Remove all docker packages
+  shell: yum remove -y docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-selinux  docker-engine-selinux docker-engine
+  ignore_errors: yes
+
+- name: Add repository to yum config manager
+  shell: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+  ignore_errors: yes
+
+- name: Install Docker CE - yum packages installed in common role
+  yum: name={{ item }} state=present
+  with_items:
+    - docker
+  ignore_errors: yes
+
+- name: Enable docker service
+  service: name={{item}} enabled=yes
+  with_items:
+    - docker
+  ignore_errors: yes
+
+- name: Start docker service
+  service: name={{item}} state=started
+  with_items:
+    - docker
+  ignore_errors: yes 

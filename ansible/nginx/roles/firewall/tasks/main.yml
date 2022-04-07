@@ -1,0 +1,11 @@
+---
+- name: Add firewall rule for http and https services
+  command: firewall-cmd --add-service=http --permanent
+  ignore_errors: True
+
+- name: Add firewall rule for http and https services
+  command: firewall-cmd --add-service=https --permanent
+  ignore_errors: True
+
+- name: Restart firewalld service
+  service: name=firewalld state=restarted  
