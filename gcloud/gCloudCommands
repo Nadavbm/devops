@@ -1,0 +1,112 @@
+
+## Initialize and set projects:
+## Initialize gcloud (go to relevant dir):
+
+$ cd google-cloud-sdk/bin
+$ gcloud init
+
+## Get a project list:
+
+$ gcloud projects list
+
+PROJECT_ID                     NAME                         PROJECT_NUMBER
+abcd                          abcd                          123123
+projex                          abbbb                        123412
+
+## Set to project:
+
+$ gcloud config set project project-123123
+
+## Deploy and Configure VM:
+## Get list of VMs for the project:
+
+$ gcloud compute instances list
+
+## To fully deploy a VM in GCP:
+
+gcloud beta compute --project=projex-123123 instances create projex-ctl-server --zone=us-east1-b --machine-type=n1-standard-1 --subnet=projects/service-123123/regions/us-east1/subnetworks/abcd --network-tier=PREMIUM --can-ip-forward --maintenance-policy=MIGRATE --service-account=502785326936-compute@developer.gserviceaccount.com --scopes=https://www.googleapis.com/auth/cloud-platform --tags=projex --image=centos-6-v20180611 --image-project=centos-cloud --boot-disk-size=20GB --boot-disk-type=pd-standard --boot-disk-device-name=projex-ctl-server --boot-disk-size=20GB --disk=name=projex-ctl-storage,device-name=projex-ctl-storage,mode=rw,boot=no --machine-type=custom-2-8192
+
+## Check the relevant parameters like
+
+--machine-type=custom-2-8192  (This will be for CPU-RAM)
+--boot-disk-size=20GB  (Size for boot device)
+
+## In case you need to redeploy VM and keep the storage disk - run the following (change the name by name, boot disk, standard, storage disk etc.
+
+$ echo y | gcloud compute instances delete name-of-vm
+
+$ echo y | gcloud compute disks delete name-of-vm
+
+$ gcloud beta compute --project=project-123123 instances create vm-in-project --zone=us-east1-b --machine-type=n1-standard-16 --subnet=projects/service-123123/regions/us-east1/subnetworks/net-work --network-tier=PREMIUM --can-ip-forward --maintenance-policy=MIGRATE --service-account=123123-compute@developer.gserviceaccount.com --scopes=https://www.googleapis.com/auth/cloud-platform --tags=tag1 --image=centos-6-v20180611 --image-project=centos-cloud --boot-disk-size=20GB --boot-disk-type=pd-standard --boot-disk-device-name=name-of-vm --boot-disk-size=20GB --disk=name=vm-storage-disk,device-name=vm-storage-disk,mode=rw,boot=no --address=vm-ext-ip
+
+## Add tags to the machine:
+
+$ gcloud compute instances add-tags INSTANCE_NAME --tags=TAG
+
+## For example:
+
+$ gcloud compute instances add-tags some-gcp-vm --tags=tag1,tag2,tag3
+
+
+## Get list of all machines and their tagging conf:
+
+$ gcloud compute instances list       --format='table(name,status,tags.list())'
+
+
+## Set SSH Keys for a project -
+## Prepare a list of PubKeys:
+
+nadav:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC6huJjny99heMUdjXY2DdPytqcqQMdsRvxIVdGs7drCpn5aa76SorDwsqaeWgEeQtqQfzdXOqIqjrrzit9Jd+aXQ+sce29fKrKkiiw6a92ze2ILtjQf0zoc+R5iiwclZ5kE+yXF+7oeu+LDx889zJcudktMk6+KNStnzbr/M4TAmQwMUChMsHr351N7mlwyOxnw4y1GWD/VlO5+GVZGwdJzDvDDlsx1FvKAWuZpYcmG5CC0Kb9iOxsjJO8nJwXaUD8Saaabbbcccdddhhhajjakkslkdfhashdfkjahsdgfkjhagsdfjhkgasjhdgfkjhgdfsakjhgkf nadav
+
+## Run the following command to set all pub keys:
+
+$ gcloud compute project-info add-metadata --metadata-from-file ssh-keys=/Path/To/Text/File/ListOfPublicKeys.txt
+
+## Managing GCP Buckets:
+## To create a bucket:
+
+$ gsutil mb -c nearline -l us-east1 gs://backup-bucket
+
+## To list the bucket:
+
+$ gsutil ls -L -b gs://other-bucket/
+$ gsutil du -s gs://backup-bucket/
+
+## To authenticate a VM for GCP bucket -> Create services account and authkey, copy the auth key to txt file and run this:
+
+$ gcloud auth activate-service-account --key-file [KEY_FILE]
+$ gcloud auth activate-service-account --key-file /Path/To/Key.txt
+
+## Managing firewall configuration:
+## To list all firewall rules:
+
+$ gcloud compute firewall-rules list
+NAME                                 NETWORK      DIRECTION  PRIORITY  ALLOW                                                                                                                          DENY
+proje                                NetworkName  INGRESS    1000      tcp:22
+projext                              NetworkName  INGRESS    1000      tcp:80,tcp:443
+proje                                NetworkName  INGRESS    1000      all
+nsjkdg                               NetworkName  INGRESS    1000      tcp:80,tcp:443
+askjdh                               NetworkName  INGRESS    1000      tcp:5432
+
+## To list specific FW rules:
+
+$ gcloud compute firewall-rules list abcd-login,projex-internal-ingress
+
+NAME                   NETWORK      DIRECTION  PRIORITY  ALLOW          DENY
+fw-serv                NetworkName  INGRESS    1000      tcp:6543-6546
+otherfw                NetworkName  INGRESS    1000      all
+
+## To create a firewall rule:
+
+$ gcloud compute --project=service-123123 firewall-rules create fw-login --description=SomeDescription 8.8.8.8 --direction=INGRESS --priority=1000 --network=NetworkName --action=ALLOW --rules=tcp:2134-1235 --source-ranges=8.8.8.8,0.0.0.0/0 --target-tags=abcd-login
+$ gcloud compute --project=service-123123 firewall-rules create project-internal-ingress --direction=INGRESS --priority=1000 --network=NetworkName --action=ALLOW --rules=all --source-ranges=10.10.10.0/24 --target-tags=prox
+
+## Connect to VM via Console:
+## It is critical to set a user with a password and then run this command:
+
+$ gcloud compute --project "test-123123" connect-to-serial-port --zone "us-east1-b" "test-server"
+
+
+## Network configuration:
+
+$ gcloud compute addresses list
