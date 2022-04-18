@@ -1,0 +1,96 @@
+## List Docker CLI commands
+docker
+docker container --help
+
+## Display Docker version and info
+docker --version
+docker version
+docker info
+
+## Execute Docker image
+docker run hello-world
+
+## List Docker images
+docker image ls
+
+## List Docker containers (running, all, all in quiet mode)
+docker container ls
+docker container ls --all
+docker container ls -aq
+
+# Get running container
+docker ps -a
+
+# Create image using this directory's Dockerfile
+docker build -t appName .
+
+# Run "friendlyname" mapping port 4000 to 80
+docker run -p 4000:80 appName
+# Same thing, but in detached mode
+docker run -d -p 4000:80 appName
+
+# List all running containers
+docker container ls
+# List all containers, even those not running
+docker container ls -a
+# Gracefully stop the specified container
+docker container stop <hash>
+# Force shutdown of the specified container
+docker container kill <hash>
+
+# Remove specified container from this machine
+docker container rm <hash>
+# Remove all containers
+docker container rm $(docker container ls -a -q)
+
+# List all images on this machine
+docker image ls
+docker image ls -a
+# Remove specified image from this machine
+docker image rm <image id>
+# Remove all images from this machine
+docker image rm $(docker image ls -a -q)
+
+# Log in this CLI session using your Docker credentials
+docker login
+# Tag <image> for upload to registry
+docker tag <image> username/repository:tag
+# Upload tagged image to registry
+docker push username/repository:tag
+# Run image from a registry
+docker run username/repository:tag
+docker run -p 4000:80 username/repository:tag
+docker run -d <imageId>
+
+# Get only containerID
+docker ps -a | grep mysql | cut -d' ' -f1
+
+# Connect to container bash
+docker exec -it <containerId> bash
+docker exec -it <containerId> sh -c "ls -lash /usr"
+docker exec -it $( docker ps | awk '{print $1}' | tail -1 ) /bin/sh
+
+# Running SQL queries directly on MySQL container
+docker exec -i <containerId> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "USE dbName; show tables;"'
+docker exec -i <containerId> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "select * from dbName.dbTable;"'
+docker exec -i <containerId> sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "INSERT INTO dbName.dbTable (username, passwordHash, status) VALUES ('nadav', '$2y$08$WqD4JZHznekyXxI9wvxSFuYS5Lvs0CfbVGEmN.LfHRgHbLXhuTLA.', 71);"'
+
+# Docker system
+docker system prune	
+docker image prune
+docker image prune -a
+docker container prune --filter "until=24h"
+docker volume prune --filter "label!=keep"
+docker network prune --filter "until=24"
+docker system prune --volumes 
+
+# Docker Compose Cheats:
+docker-compose start
+docker-compose stop
+docker-compose pause
+docker-compose unpause
+docker-compose ps
+docker-compose up
+docker-compose down
+
+
